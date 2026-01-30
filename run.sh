@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# run.sh - Install dependencies and start the application
+# Shaji Pappan's Install and Run Script
 
-echo "Installing dependencies..."
+echo "Installing Pappan's dependencies..."
 npm install
 
-echo "Starting application..."
+echo "Starting Shaji Pappan Link Estractor..."
 npm run dev

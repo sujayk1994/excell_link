@@ -4,7 +4,7 @@ import { ProcessingState } from "@/components/ProcessingState";
 import { SuccessState } from "@/components/SuccessState";
 import { useUploadFile } from "@/hooks/use-files";
 import { type ProcessedFile } from "@shared/routes";
-import { Link2 } from "lucide-react";
+import logoImg from "@/assets/logo.jpg";
 
 export default function Home() {
   const [processedFile, setProcessedFile] = useState<ProcessedFile | null>(null);
@@ -13,7 +13,12 @@ export default function Home() {
   const handleFileSelect = (file: File) => {
     uploadMutation.mutate(file, {
       onSuccess: (data) => {
-        setProcessedFile(data);
+        // Ensure data has linkCount or default it for the type match
+        const processed: ProcessedFile = {
+          ...data,
+          linkCount: (data as any).linkCount ?? 0
+        };
+        setProcessedFile(processed);
       },
     });
   };
@@ -24,30 +29,36 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 relative overflow-hidden font-sans">
+    <div className="min-h-screen bg-background relative overflow-hidden font-sans">
       {/* Background decoration */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-[30%] -right-[10%] w-[70%] h-[70%] rounded-full bg-blue-100/50 blur-3xl opacity-60 mix-blend-multiply filter" />
-        <div className="absolute top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-indigo-100/50 blur-3xl opacity-60 mix-blend-multiply filter" />
+        <div className="absolute -top-[30%] -right-[10%] w-[70%] h-[70%] rounded-full bg-primary/20 blur-3xl opacity-60 mix-blend-multiply filter" />
+        <div className="absolute top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-secondary/20 blur-3xl opacity-60 mix-blend-multiply filter" />
       </div>
 
       <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-24">
         {/* Header */}
         <div className="text-center mb-16 space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-blue-600 text-sm font-medium mb-4">
-            <Link2 className="w-4 h-4" />
-            <span>Excel Link Extractor Tool</span>
+          <div className="flex justify-center mb-6">
+            <img 
+              src={logoImg} 
+              alt="Shaji Pappan" 
+              className="w-32 h-32 rounded-full border-4 border-secondary object-cover shadow-2xl animate-in"
+            />
+          </div>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary/10 border border-secondary/20 text-secondary text-sm font-medium mb-4">
+            <span>Official Link Extractor</span>
           </div>
           
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-display font-bold text-slate-900 tracking-tight">
-            Extract URLs from Excel <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
-              in seconds.
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-display font-bold text-foreground tracking-tight">
+            Shaji Pappan <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-secondary to-accent">
+              Link Estractor
             </span>
           </h1>
           
-          <p className="text-lg sm:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
-            Upload your spreadsheet containing messy links. We'll organize them into a clean, downloadable file automatically.
+          <p className="text-lg sm:text-xl text-foreground/80 max-w-2xl mx-auto leading-relaxed">
+            Pappan sets the links free! Upload your spreadsheet and watch the magic happen.
           </p>
         </div>
 

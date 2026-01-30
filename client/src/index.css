@@ -8,28 +8,28 @@
   --font-display: 'Outfit', sans-serif;
   --font-body: 'Inter', sans-serif;
 
-  /* Clean Professional Palette - Blue/Slate based */
-  --background: 210 40% 98%;
+  /* Shaji Pappan Theme - Yellow, Blue, Red, Dark Green */
+  --background: 48 100% 96%; /* Light Creamy Yellow */
   --foreground: 222 47% 11%;
 
-  --primary: 221 83% 53%;
-  --primary-foreground: 210 40% 98%;
+  --primary: 45 100% 50%; /* Pappan Yellow */
+  --primary-foreground: 222 47% 11%;
 
-  --secondary: 210 40% 96%;
-  --secondary-foreground: 222 47% 11%;
+  --secondary: 210 100% 40%; /* Bus Blue */
+  --secondary-foreground: 210 40% 98%;
 
-  --muted: 210 40% 96%;
+  --muted: 45 30% 90%;
   --muted-foreground: 215 16% 47%;
 
-  --accent: 262 83% 58%;
+  --accent: 0 84% 45%; /* Red accent from lungi/logo */
   --accent-foreground: 210 40% 98%;
 
   --destructive: 0 84% 60%;
   --destructive-foreground: 210 40% 98%;
 
-  --border: 214 32% 91%;
-  --input: 214 32% 91%;
-  --ring: 221 83% 53%;
+  --border: 145 60% 20%; /* Dark Green from shirt */
+  --input: 45 100% 90%;
+  --ring: 45 100% 50%;
 
   --radius: 0.75rem;
 }

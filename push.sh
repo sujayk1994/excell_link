@@ -1,19 +1,18 @@
 #!/bin/bash
 
-# push.sh - Commit and push changes to GitHub with a single command
+# Shaji Pappan's GitHub Push Script
 
 if [ -z "$1" ]; then
-    echo "Usage: ./push.sh \"commit message\""
-    exit 1
+    COMMIT_MSG="Update Shaji Pappan Link Estractor"
+else
+    COMMIT_MSG="$1"
 fi
 
-COMMIT_MESSAGE=$1
-
-echo "Adding changes..."
+echo "Staging changes..."
 git add .
 
-echo "Committing changes: $COMMIT_MESSAGE"
-git commit -m "$COMMIT_MESSAGE"
+echo "Committing with message: $COMMIT_MSG"
+git commit -m "$COMMIT_MSG"
 
 echo "Pushing to GitHub..."
 git push origin main
