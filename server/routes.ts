@@ -99,25 +99,21 @@ export async function registerRoutes(
       // Create a new workbook with extracted links and domains
       const newWorkbook = XLSX.utils.book_new();
       
-      let finalRows: string[][];
-      if (deduplicate) {
-        // User requested: All links in A (no link deduplication here), 
-        // but duplicate removal logic applied to the PAIRS (filter based on domain uniqueness)
-        const seenDomains = new Set<string>();
-        finalRows = links.reduce((acc: string[][], link) => {
-          const domain = formatDomain(link);
-          if (!seenDomains.has(domain)) {
-            seenDomains.add(domain);
-            acc.push([link, domain]);
-          }
-          return acc;
-        }, []);
-      } else {
-        // Standard mapping if no deduplication
-        finalRows = links.map(link => [link, formatDomain(link)]);
+      // User requested: Decoupled columns
+      // Column A: All links (including duplicates)
+      // Column B: Only unique formatted domains
+      const columnA = links;
+      const columnB = deduplicate ? [...new Set(links.map(formatDomain))] : links.map(formatDomain);
+      
+      // Combine into rows by taking the longest list as the row count
+      const rowCount = Math.max(columnA.length, columnB.length);
+      const finalRows: (string | undefined)[][] = [];
+      
+      for (let i = 0; i < rowCount; i++) {
+        finalRows.push([columnA[i], columnB[i]]);
       }
 
-      const newWorksheet = XLSX.utils.aoa_to_sheet([["Full URL", "Domain"], ...finalRows]);
+      const newWorksheet = XLSX.utils.aoa_to_sheet([["Full URL", "Unique Domain"], ...finalRows]);
       
       // Auto-width columns
       newWorksheet['!cols'] = [{ wch: 80 }, { wch: 40 }];
@@ -137,7 +133,7 @@ export async function registerRoutes(
         size: fs.statSync(processedFilePath).size
       });
 
-      res.status(200).json({ ...processedFile, linkCount: finalRows.length });
+      res.status(200).json({ ...processedFile, linkCount: columnB.length });
     } catch (error) {
       console.error("Processing error:", error);
       res.status(500).json({ message: "Failed to process Excel file" });
