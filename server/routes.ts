@@ -18,6 +18,11 @@ export async function registerRoutes(
     fs.mkdirSync("uploads");
   }
 
+  // Health check endpoint
+  app.get("/api/health", (req, res) => {
+    res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
+  });
+
   app.post(api.files.upload.path, upload.single("file"), async (req: Request, res) => {
     try {
       if (!req.file) {
