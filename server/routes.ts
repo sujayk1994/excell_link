@@ -62,7 +62,6 @@ export async function registerRoutes(
       const getDomain = (url: string) => {
         try {
           // 1. First, handle breadcrumbs like "onelogin.com › learn › ..."
-          // Split by "›", ">", or " › " and take the first part
           let cleanStr = url.split(/[›>]/)[0].trim();
           
           // 2. Remove any protocol if present for parsing
@@ -71,28 +70,17 @@ export async function registerRoutes(
           // 3. Split by "/" to remove paths and take the hostname part
           let hostname = cleanStr.split('/')[0].trim();
           
-          // 4. Heuristic to extract just the domain part (handle cases like onelogin.com.anything)
-          // We look for common TLDs to cut off anything that might have leaked in
-          const tldMatch = hostname.match(/^([^?#\s]+?\.(?:com|net|org|co|in|edu|gov|io|ai|biz|info|me|uk|ca|au|de|jp|fr|br|it|ru|es|ch|nl|se|no|dk|fi|pl|tr|cn|tw|kr|vn|th|id|ph|my|sg))/i);
-          if (tldMatch) {
-            hostname = tldMatch[1];
-          }
-
           return hostname.toLowerCase();
         } catch (e) {
           return url.toLowerCase().split(/[/?#›>]/)[0].trim();
         }
       };
 
-      // Ensure we always return www.domain.com format
+      // Ensure we return the domain as is (no forced www)
       const formatDomain = (url: string) => {
         let domain = getDomain(url);
         // Remove leading/trailing dots and spaces
         domain = domain.replace(/^\.+|\.+$/g, '').trim();
-        
-        if (!domain.startsWith('www.') && !domain.includes('docs.') && !domain.includes('app.')) {
-           return `www.${domain}`;
-        }
         return domain;
       };
 
@@ -101,7 +89,7 @@ export async function registerRoutes(
       
       // User requested: Decoupled columns
       // Column A: All links (including duplicates)
-      // Column B: Only unique formatted domains
+      // Column B: Only unique formatted domains (compacted, no empty rows)
       const columnA = links;
       const columnB = deduplicate ? [...new Set(links.map(formatDomain))] : links.map(formatDomain);
       
@@ -110,6 +98,8 @@ export async function registerRoutes(
       const finalRows: (string | undefined)[][] = [];
       
       for (let i = 0; i < rowCount; i++) {
+        // columnA[i] and columnB[i] will be undefined if the index is out of bounds
+        // which naturally creates the decoupled/compacted effect
         finalRows.push([columnA[i], columnB[i]]);
       }
 
