@@ -57,11 +57,7 @@ export async function registerRoutes(
         });
       });
 
-      // Remove duplicates if requested
-      if (deduplicate) {
-        links = [...new Set(links)];
-      }
-
+      // User requested: All links in A, duplicate removal only for B (domains)
       // Helper to extract domain strictly
       const getDomain = (url: string) => {
         try {
@@ -79,11 +75,10 @@ export async function registerRoutes(
         }
       };
 
-      // Ensure we always return www.domain.com format if requested by user
+      // Ensure we always return www.domain.com format
       const formatDomain = (url: string) => {
         const domain = getDomain(url);
         if (!domain.startsWith('www.') && !domain.includes('docs.')) {
-           // Basic heuristic: if it's a standard domain, ensure www
            return `www.${domain}`;
         }
         return domain;
@@ -94,6 +89,8 @@ export async function registerRoutes(
       
       let finalRows: string[][];
       if (deduplicate) {
+        // User requested: All links in A (no link deduplication here), 
+        // but duplicate removal logic applied to the PAIRS (filter based on domain uniqueness)
         const seenDomains = new Set<string>();
         finalRows = links.reduce((acc: string[][], link) => {
           const domain = formatDomain(link);
@@ -104,6 +101,7 @@ export async function registerRoutes(
           return acc;
         }, []);
       } else {
+        // Standard mapping if no deduplication
         finalRows = links.map(link => [link, formatDomain(link)]);
       }
 
