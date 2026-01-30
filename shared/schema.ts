@@ -1,18 +1,20 @@
-import { sql } from "drizzle-orm";
-import { pgTable, text, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
+export const processedFiles = pgTable("processed_files", {
+  id: serial("id").primaryKey(),
+  originalName: text("original_name").notNull(),
+  processedName: text("processed_name").notNull(),
+  mimeType: text("mime_type").notNull(),
+  size: integer("size").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
+export const insertProcessedFileSchema = createInsertSchema(processedFiles).omit({ 
+  id: true, 
+  createdAt: true 
 });
 
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
+export type ProcessedFile = typeof processedFiles.$inferSelect;
+export type InsertProcessedFile = z.infer<typeof insertProcessedFileSchema>;
