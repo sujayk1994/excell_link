@@ -77,7 +77,7 @@ export async function registerRoutes(
       // Cleanup original upload if desired, but keeping for now or tmp cleanup
       // fs.unlinkSync(filePath); 
 
-      res.status(200).json(processedFile);
+      res.status(200).json({ ...processedFile, linkCount: links.length });
     } catch (error) {
       console.error("Processing error:", error);
       res.status(500).json({ message: "Failed to process Excel file" });

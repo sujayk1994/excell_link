@@ -1,4 +1,4 @@
-import { Download, FileCheck, ArrowRight, Calendar, HardDrive } from "lucide-react";
+import { Download, FileCheck, ArrowRight, Calendar, HardDrive, Link2 } from "lucide-react";
 import { type ProcessedFile, buildUrl, api } from "@shared/routes";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
@@ -30,6 +30,14 @@ export function SuccessState({ file, onReset }: SuccessStateProps) {
         {/* Content */}
         <div className="p-8 space-y-6">
           <div className="space-y-4">
+            <div className="p-5 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100 text-center">
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <Link2 className="w-5 h-5 text-blue-600" />
+                <p className="text-xs font-medium text-blue-600 uppercase tracking-wider">Links Extracted</p>
+              </div>
+              <p className="text-3xl font-bold text-slate-900">{file.linkCount}</p>
+            </div>
+
             <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-white rounded-lg shadow-sm">

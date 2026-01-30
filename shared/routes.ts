@@ -45,3 +45,6 @@ export function buildUrl(path: string, params?: Record<string, string | number>)
   }
   return url;
 }
+
+// Type for processed file response with link count
+export type ProcessedFile = typeof processedFiles.$inferSelect & { linkCount: number };
