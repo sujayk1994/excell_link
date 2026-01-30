@@ -21,6 +21,7 @@ In the **Environment** tab on Render, add the following:
 ### 4. Health Check (Optional but Recommended)
 *   Render will automatically use the `EXPOSE 5000` from the Dockerfile.
 *   For the health check path, you can use: `/api/health`
+*   **Important**: Ensure your "Build Command" on Render is empty (as we use Docker) and the "Start Command" is also handled by the Dockerfile.
 
 ### 5. Deploy
 *   Click **Create Web Service**. Render will build the Docker container and deploy the app automatically.

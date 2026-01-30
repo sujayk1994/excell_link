@@ -40,5 +40,5 @@ ENV PORT=5000
 EXPOSE 5000
 
 # Start command
-# Adjusting based on common build outputs
-CMD ["node", "dist/index.js"]
+# Based on package.json start script: NODE_ENV=production node dist/index.cjs
+CMD ["node", "dist/index.cjs"]
