@@ -62,14 +62,31 @@ export async function registerRoutes(
         links = [...new Set(links)];
       }
 
-      // Helper to extract domain
+      // Helper to extract domain strictly
       const getDomain = (url: string) => {
         try {
-          const domain = new URL(url).hostname;
-          return domain;
+          // Clean the URL if it has those breadcrumb separators like ' > '
+          const cleanUrl = url.split(' > ')[0].trim();
+          const urlObj = new URL(cleanUrl.startsWith('http') ? cleanUrl : `http://${cleanUrl}`);
+          return urlObj.hostname;
         } catch (e) {
-          return url; // Fallback if not a valid URL
+          // If URL parsing fails, try a simple regex or string split for the domain
+          const match = url.match(/^(?:https?:\/\/)?(?:[^@\n]+@)?(?:www\.)?([^:\/\n?]+)/im);
+          if (match && match[1]) {
+            return `www.${match[1].replace(/^www\./, '')}`;
+          }
+          return url.split(/[/?#]/)[0]; 
         }
+      };
+
+      // Ensure we always return www.domain.com format if requested by user
+      const formatDomain = (url: string) => {
+        const domain = getDomain(url);
+        if (!domain.startsWith('www.') && !domain.includes('docs.')) {
+           // Basic heuristic: if it's a standard domain, ensure www
+           return `www.${domain}`;
+        }
+        return domain;
       };
 
       // Create a new workbook with extracted links and domains
@@ -77,14 +94,9 @@ export async function registerRoutes(
       
       let finalRows: string[][];
       if (deduplicate) {
-        // If deduplicated, we want unique domains in B
-        const uniqueDomains = [...new Set(links.map(getDomain))];
-        // We'll align links with domains or just show unique domains if requested specifically for col B
-        // The user specifically asked for "B column only domain should come without duplication"
-        // Let's create rows where A is link and B is domain, but filtered for unique domains
         const seenDomains = new Set<string>();
         finalRows = links.reduce((acc: string[][], link) => {
-          const domain = getDomain(link);
+          const domain = formatDomain(link);
           if (!seenDomains.has(domain)) {
             seenDomains.add(domain);
             acc.push([link, domain]);
@@ -92,7 +104,7 @@ export async function registerRoutes(
           return acc;
         }, []);
       } else {
-        finalRows = links.map(link => [link, getDomain(link)]);
+        finalRows = links.map(link => [link, formatDomain(link)]);
       }
 
       const newWorksheet = XLSX.utils.aoa_to_sheet([["Full URL", "Domain"], ...finalRows]);
