@@ -61,24 +61,36 @@ export async function registerRoutes(
       // Helper to extract domain strictly
       const getDomain = (url: string) => {
         try {
-          // Clean the URL if it has those breadcrumb separators like ' > '
-          const cleanUrl = url.split(' > ')[0].trim();
-          const urlObj = new URL(cleanUrl.startsWith('http') ? cleanUrl : `http://${cleanUrl}`);
-          return urlObj.hostname;
-        } catch (e) {
-          // If URL parsing fails, try a simple regex or string split for the domain
-          const match = url.match(/^(?:https?:\/\/)?(?:[^@\n]+@)?(?:www\.)?([^:\/\n?]+)/im);
-          if (match && match[1]) {
-            return `www.${match[1].replace(/^www\./, '')}`;
+          // 1. First, handle breadcrumbs like "onelogin.com › learn › ..."
+          // Split by "›", ">", or " › " and take the first part
+          let cleanStr = url.split(/[›>]/)[0].trim();
+          
+          // 2. Remove any protocol if present for parsing
+          cleanStr = cleanStr.replace(/^(https?:\/\/)/, "");
+          
+          // 3. Split by "/" to remove paths and take the hostname part
+          let hostname = cleanStr.split('/')[0].trim();
+          
+          // 4. Heuristic to extract just the domain part (handle cases like onelogin.com.anything)
+          // We look for common TLDs to cut off anything that might have leaked in
+          const tldMatch = hostname.match(/^([^?#\s]+?\.(?:com|net|org|co|in|edu|gov|io|ai|biz|info|me|uk|ca|au|de|jp|fr|br|it|ru|es|ch|nl|se|no|dk|fi|pl|tr|cn|tw|kr|vn|th|id|ph|my|sg))/i);
+          if (tldMatch) {
+            hostname = tldMatch[1];
           }
-          return url.split(/[/?#]/)[0]; 
+
+          return hostname.toLowerCase();
+        } catch (e) {
+          return url.toLowerCase().split(/[/?#›>]/)[0].trim();
         }
       };
 
       // Ensure we always return www.domain.com format
       const formatDomain = (url: string) => {
-        const domain = getDomain(url);
-        if (!domain.startsWith('www.') && !domain.includes('docs.')) {
+        let domain = getDomain(url);
+        // Remove leading/trailing dots and spaces
+        domain = domain.replace(/^\.+|\.+$/g, '').trim();
+        
+        if (!domain.startsWith('www.') && !domain.includes('docs.') && !domain.includes('app.')) {
            return `www.${domain}`;
         }
         return domain;
