@@ -13,7 +13,7 @@ interface DropzoneProps {
 export function Dropzone({ onFileSelect, isProcessing }: DropzoneProps) {
   const [isDragActive, setIsDragActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [deduplicate, setDeduplicate] = useState(false);
+  const [deduplicate, setDeduplicate] = useState(true);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
