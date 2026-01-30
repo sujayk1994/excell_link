@@ -1,0 +1,71 @@
+#14 7.783   run `npm fund` for details
+#14 7.785 
+#14 7.785 2 vulnerabilities (1 moderate, 1 high)
+#14 7.785 
+#14 7.785 To address issues that do not require attention, run:
+#14 7.785   npm audit fix
+#14 7.785 
+#14 7.785 Some issues need review, and may require choosing
+#14 7.785 a different dependency.
+#14 7.785 
+#14 7.785 Run `npm audit` for details.
+#14 7.786 npm notice
+#14 7.786 npm notice New major version of npm available! 10.8.2 -> 11.8.0
+#14 7.786 npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.8.0
+#14 7.786 npm notice To update run: npm install -g npm@11.8.0
+#14 7.786 npm notice
+#14 DONE 13.5s
+#15 [stage-1 6/6] RUN mkdir -p uploads
+#15 DONE 0.5s
+#16 exporting to docker image format
+#16 exporting layers
+#16 exporting layers 9.2s done
+#16 exporting manifest sha256:d16316b9ae6a240a2332241701374d7246563a0c9c1c3b45314df3bf85b68766 done
+#16 exporting config sha256:b1eeb7f657692ff1cc4f2bf705d45cc67d2435096f1dde63b40e20f450542546 0.0s done
+#16 DONE 10.1s
+#17 exporting cache to client directory
+#17 preparing build cache for export
+#17 writing cache image manifest sha256:8f8ed6dd8ef1d21aef16766798929cd5b61362b253610ca1bd13223fd4e1ce3a done
+#17 DONE 17.0s
+Pushing image to registry...
+Upload succeeded
+==> Deploying...
+==> Setting WEB_CONCURRENCY=1 by default, based on available CPUs in the instance
+node:internal/modules/cjs/loader:1210
+  throw err;
+  ^
+Error: Cannot find module '/app/dist/index.js'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)
+    at Module._load (node:internal/modules/cjs/loader:1038:27)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+    at node:internal/main/run_main_module:28:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+Node.js v20.20.0
+==> Exited with status 1
+==> Common ways to troubleshoot your deploy: https://render.com/docs/troubleshooting-deploys
+node:internal/modules/cjs/loader:1210
+  throw err;
+  ^
+Error: Cannot find module '/app/dist/index.js'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)
+    at Module._load (node:internal/modules/cjs/loader:1038:27)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+    at node:internal/main/run_main_module:28:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+Node.js v20.20.0
+node:internal/modules/cjs/loader:1210
+  throw err;
+  ^
+Error: Cannot find module '/app/dist/index.js'
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1207:15)
+    at Module._load (node:internal/modules/cjs/loader:1038:27)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+    at node:internal/main/run_main_module:28:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+Node.js v20.20.0

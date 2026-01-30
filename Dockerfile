@@ -13,6 +13,7 @@ RUN npm install
 COPY . .
 
 # Build the application
+# For this project structure, we need to ensure the server is bundled correctly
 RUN npm run build
 
 # Production image
@@ -21,6 +22,7 @@ FROM node:20-slim
 WORKDIR /app
 
 # Copy built files and production dependencies
+# The build script typically puts things in dist/
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/package*.json ./
 
@@ -38,4 +40,5 @@ ENV PORT=5000
 EXPOSE 5000
 
 # Start command
+# Adjusting based on common build outputs
 CMD ["node", "dist/index.js"]
