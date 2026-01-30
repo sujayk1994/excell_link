@@ -62,13 +62,43 @@ export async function registerRoutes(
         links = [...new Set(links)];
       }
 
-      // Create a new workbook with extracted links
+      // Helper to extract domain
+      const getDomain = (url: string) => {
+        try {
+          const domain = new URL(url).hostname;
+          return domain;
+        } catch (e) {
+          return url; // Fallback if not a valid URL
+        }
+      };
+
+      // Create a new workbook with extracted links and domains
       const newWorkbook = XLSX.utils.book_new();
-      const linkData = links.map(link => [link]); // Array of arrays for sheet data
-      const newWorksheet = XLSX.utils.aoa_to_sheet([["Extracted Links"], ...linkData]);
       
-      // Auto-width the column
-      newWorksheet['!cols'] = [{ wch: 100 }];
+      let finalRows: string[][];
+      if (deduplicate) {
+        // If deduplicated, we want unique domains in B
+        const uniqueDomains = [...new Set(links.map(getDomain))];
+        // We'll align links with domains or just show unique domains if requested specifically for col B
+        // The user specifically asked for "B column only domain should come without duplication"
+        // Let's create rows where A is link and B is domain, but filtered for unique domains
+        const seenDomains = new Set<string>();
+        finalRows = links.reduce((acc: string[][], link) => {
+          const domain = getDomain(link);
+          if (!seenDomains.has(domain)) {
+            seenDomains.add(domain);
+            acc.push([link, domain]);
+          }
+          return acc;
+        }, []);
+      } else {
+        finalRows = links.map(link => [link, getDomain(link)]);
+      }
+
+      const newWorksheet = XLSX.utils.aoa_to_sheet([["Full URL", "Domain"], ...finalRows]);
+      
+      // Auto-width columns
+      newWorksheet['!cols'] = [{ wch: 80 }, { wch: 40 }];
       
       XLSX.utils.book_append_sheet(newWorkbook, newWorksheet, "Links");
 
@@ -85,10 +115,7 @@ export async function registerRoutes(
         size: fs.statSync(processedFilePath).size
       });
 
-      // Cleanup original upload if desired, but keeping for now or tmp cleanup
-      // fs.unlinkSync(filePath); 
-
-      res.status(200).json({ ...processedFile, linkCount: links.length });
+      res.status(200).json({ ...processedFile, linkCount: finalRows.length });
     } catch (error) {
       console.error("Processing error:", error);
       res.status(500).json({ message: "Failed to process Excel file" });
