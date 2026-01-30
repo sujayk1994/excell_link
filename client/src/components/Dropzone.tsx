@@ -1,16 +1,19 @@
 import { useCallback, useState } from "react";
-import { UploadCloud, FileSpreadsheet, AlertCircle } from "lucide-react";
+import { UploadCloud, FileSpreadsheet, AlertCircle, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 interface DropzoneProps {
-  onFileSelect: (file: File) => void;
+  onFileSelect: (file: File, deduplicate: boolean) => void;
   isProcessing: boolean;
 }
 
 export function Dropzone({ onFileSelect, isProcessing }: DropzoneProps) {
   const [isDragActive, setIsDragActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deduplicate, setDeduplicate] = useState(false);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -55,22 +58,35 @@ export function Dropzone({ onFileSelect, isProcessing }: DropzoneProps) {
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0];
       if (validateFile(file)) {
-        onFileSelect(file);
+        onFileSelect(file, deduplicate);
       }
     }
-  }, [onFileSelect, isProcessing]);
+  }, [onFileSelect, isProcessing, deduplicate]);
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       if (validateFile(file)) {
-        onFileSelect(file);
+        onFileSelect(file, deduplicate);
       }
     }
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto">
+    <div className="w-full max-w-2xl mx-auto space-y-6">
+      <div className="flex items-center justify-center gap-3 p-4 bg-white/40 border border-white/50 backdrop-blur-sm rounded-2xl">
+        <Switch
+          id="dedupe-mode"
+          checked={deduplicate}
+          onCheckedChange={setDeduplicate}
+          disabled={isProcessing}
+        />
+        <Label htmlFor="dedupe-mode" className="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-700">
+          <Trash2 className="w-4 h-4 text-accent" />
+          Remove Duplicate Links
+        </Label>
+      </div>
+
       <div
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}

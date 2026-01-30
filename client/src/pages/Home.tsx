@@ -10,8 +10,8 @@ export default function Home() {
   const [processedFile, setProcessedFile] = useState<ProcessedFile | null>(null);
   const uploadMutation = useUploadFile();
 
-  const handleFileSelect = (file: File) => {
-    uploadMutation.mutate(file, {
+  const handleFileSelect = (file: File, deduplicate: boolean) => {
+    uploadMutation.mutate({ file, deduplicate }, {
       onSuccess: (data) => {
         // Ensure data has linkCount or default it for the type match
         const processed: ProcessedFile = {

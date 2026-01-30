@@ -29,11 +29,12 @@ export async function registerRoutes(
         return res.status(400).json({ message: "No file uploaded" });
       }
 
+      const deduplicate = req.body.deduplicate === "true";
       const filePath = req.file.path;
       
       // Read the Excel file
       const workbook = XLSX.readFile(filePath);
-      const links: string[] = [];
+      let links: string[] = [];
 
       // Iterate through all sheets
       workbook.SheetNames.forEach(sheetName => {
@@ -55,6 +56,11 @@ export async function registerRoutes(
           }
         });
       });
+
+      // Remove duplicates if requested
+      if (deduplicate) {
+        links = [...new Set(links)];
+      }
 
       // Create a new workbook with extracted links
       const newWorkbook = XLSX.utils.book_new();
