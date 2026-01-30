@@ -1,12 +1,11 @@
 import type { Express, Request } from "express";
 import type { Server } from "http";
 import multer from "multer";
-import * as XLSX from "xlsx";
+import XLSX from "xlsx";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
 import path from "path";
 import fs from "fs";
-import express from "express";
 
 const upload = multer({ dest: "uploads/" });
 
