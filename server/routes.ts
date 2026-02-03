@@ -8,8 +8,15 @@ import path from "path";
 import fs from "fs";
 import axios from "axios";
 import * as cheerio from "cheerio";
+import OpenAI from "openai";
+import { batchProcess } from "./replit_integrations/batch";
 
 const upload = multer({ dest: "uploads/" });
+
+const openai = new OpenAI({
+  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
+  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+});
 
 async function scrapeDescription(url: string): Promise<string> {
   try {
@@ -23,10 +30,27 @@ async function scrapeDescription(url: string): Promise<string> {
     const $ = cheerio.load(response.data);
     const description = $('meta[name="description"]').attr('content') || 
                        $('meta[property="og:description"]').attr('content') ||
-                       "No description found";
+                       "";
     return description.trim();
   } catch (error) {
-    return "Error fetching description";
+    return "";
+  }
+}
+
+async function refineDescriptionWithAI(domain: string, rawDescription: string): Promise<string> {
+  try {
+    const prompt = `You are a niche business analyst. Given the domain "${domain}" and its raw metadata description: "${rawDescription || 'No description found'}", provide a concise (15-20 words) summary of what this company does and what products/services they offer. Focus on being professional and informative. If no description is provided, try to infer the niche from the domain name itself.`;
+    
+    const response = await openai.chat.completions.create({
+      model: "gpt-5.1",
+      messages: [{ role: "user", content: prompt }],
+      max_completion_tokens: 100,
+    });
+
+    return response.choices[0]?.message?.content?.trim() || "Description unavailable";
+  } catch (error) {
+    console.error("AI Refinement error:", error);
+    return rawDescription || "Description unavailable";
   }
 }
 
@@ -62,16 +86,20 @@ export async function registerRoutes(
       const descIndex = headers.indexOf("Description");
       const domainIndex = headers.indexOf("Unique Domain");
 
-      // Scrape for unique domains (limited to first 20 for performance in this turn)
-      const scrapePromises = data.slice(1).map(async (row, i) => {
-        const domain = row[domainIndex];
-        if (domain && domain !== "Unique Domain") {
-          row[descIndex] = await scrapeDescription(domain);
-        }
-        return row;
-      });
-
-      await Promise.all(scrapePromises);
+      // Scrape for unique domains using batch processing for efficiency
+      const rowsToProcess = data.slice(1);
+      await batchProcess(
+        rowsToProcess,
+        async (row) => {
+          const domain = row[domainIndex];
+          if (domain && domain !== "Unique Domain") {
+            const rawDesc = await scrapeDescription(domain);
+            row[descIndex] = await refineDescriptionWithAI(domain, rawDesc);
+          }
+          return row;
+        },
+        { concurrency: 5, retries: 3 }
+      );
 
       const newSheet = XLSX.utils.aoa_to_sheet(data);
       newSheet['!cols'] = [{ wch: 80 }, { wch: 40 }, { wch: 100 }];
