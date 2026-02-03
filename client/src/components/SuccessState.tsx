@@ -1,4 +1,4 @@
-import { Download, FileCheck, ArrowRight, Calendar, HardDrive, Link2, Search, Loader2 } from "lucide-react";
+import { Download, FileCheck, ArrowRight, Calendar, HardDrive, Link2, Search, Loader2, Mail } from "lucide-react";
 import { type ProcessedFile, buildUrl, api } from "@shared/routes";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
@@ -13,6 +13,8 @@ interface SuccessStateProps {
 
 export function SuccessState({ file, onReset }: SuccessStateProps) {
   const [isScraping, setIsScraping] = useState(false);
+  const [isFindingEmails, setIsFindingEmails] = useState(false);
+  const [emailCount, setEmailCount] = useState<number | null>(null);
   const { toast } = useToast();
   const downloadUrl = buildUrl(api.files.download.path, { id: file.id });
 
@@ -35,6 +37,27 @@ export function SuccessState({ file, onReset }: SuccessStateProps) {
     }
   };
 
+  const handleFindEmails = async () => {
+    setIsFindingEmails(true);
+    try {
+      const response = await apiRequest("POST", `/api/files/${file.id}/find-emails`);
+      const data = await response.json();
+      setEmailCount(data.emailCount);
+      toast({
+        title: "Success",
+        description: `Found ${data.emailCount} emails. They have been added to Column D.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to find emails. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsFindingEmails(false);
+    }
+  };
+
   return (
     <motion.div 
       initial={{ opacity: 0, scale: 0.95 }}
@@ -54,12 +77,22 @@ export function SuccessState({ file, onReset }: SuccessStateProps) {
         {/* Content */}
         <div className="p-8 space-y-6">
           <div className="space-y-4">
-            <div className="p-5 bg-gradient-to-r from-primary to-primary/80 rounded-xl border border-primary/20 text-center shadow-lg hover-elevate">
-              <div className="flex items-center justify-center gap-2 mb-1">
-                <Link2 className="w-5 h-5 text-primary-foreground" />
-                <p className="text-xs font-medium text-primary-foreground uppercase tracking-wider">Total No of Companies</p>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-5 bg-gradient-to-r from-primary to-primary/80 rounded-xl border border-primary/20 text-center shadow-lg hover-elevate">
+                <div className="flex items-center justify-center gap-2 mb-1">
+                  <Link2 className="w-5 h-5 text-primary-foreground" />
+                  <p className="text-[10px] font-medium text-primary-foreground uppercase tracking-wider">Companies</p>
+                </div>
+                <p className="text-2xl font-bold text-primary-foreground">{file.linkCount}</p>
               </div>
-              <p className="text-3xl font-bold text-primary-foreground">{file.linkCount}</p>
+
+              <div className="p-5 bg-gradient-to-r from-secondary to-secondary/80 rounded-xl border border-secondary/20 text-center shadow-lg hover-elevate">
+                <div className="flex items-center justify-center gap-2 mb-1">
+                  <Mail className="w-5 h-5 text-secondary-foreground" />
+                  <p className="text-[10px] font-medium text-secondary-foreground uppercase tracking-wider">Emails Found</p>
+                </div>
+                <p className="text-2xl font-bold text-secondary-foreground">{emailCount ?? 0}</p>
+              </div>
             </div>
 
             <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100">
@@ -95,7 +128,7 @@ export function SuccessState({ file, onReset }: SuccessStateProps) {
           <div className="grid grid-cols-1 gap-3">
             <button
               onClick={handleScrape}
-              disabled={isScraping}
+              disabled={isScraping || isFindingEmails}
               className="group w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-600/20 transition-all hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isScraping ? (
@@ -104,6 +137,19 @@ export function SuccessState({ file, onReset }: SuccessStateProps) {
                 <Search className="w-5 h-5" />
               )}
               {isScraping ? "Scraping Descriptions..." : "Scrape Website Descriptions"}
+            </button>
+
+            <button
+              onClick={handleFindEmails}
+              disabled={isScraping || isFindingEmails}
+              className="group w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-semibold text-white bg-teal-600 hover:bg-teal-700 shadow-lg shadow-teal-600/20 transition-all hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isFindingEmails ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <Mail className="w-5 h-5" />
+              )}
+              {isFindingEmails ? "Finding Emails..." : "Find Management Emails"}
             </button>
 
             <a

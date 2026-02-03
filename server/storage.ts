@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 export interface IStorage {
   createProcessedFile(file: InsertProcessedFile): Promise<ProcessedFile>;
   getProcessedFile(id: number): Promise<ProcessedFile | undefined>;
+  updateEmailCount(id: number, count: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -19,6 +20,11 @@ export class DatabaseStorage implements IStorage {
     const [file] = await db.select().from(processedFiles).where(eq(processedFiles.id, id));
     return file;
   }
+
+  async updateEmailCount(id: number, count: number): Promise<void> {
+    if (!db) throw new Error("Database not initialized");
+    await db.update(processedFiles).set({ emailCount: count }).where(eq(processedFiles.id, id));
+  }
 }
 
 export class MemStorage implements IStorage {
@@ -32,13 +38,20 @@ export class MemStorage implements IStorage {
 
   async createProcessedFile(insertFile: InsertProcessedFile): Promise<ProcessedFile> {
     const id = this.nextId++;
-    const file: ProcessedFile = { ...insertFile, id, createdAt: new Date() };
+    const file: ProcessedFile = { ...insertFile, id, createdAt: new Date(), emailCount: 0 };
     this.files.set(id, file);
     return file;
   }
 
   async getProcessedFile(id: number): Promise<ProcessedFile | undefined> {
     return this.files.get(id);
+  }
+
+  async updateEmailCount(id: number, count: number): Promise<void> {
+    const file = this.files.get(id);
+    if (file) {
+      file.emailCount = count;
+    }
   }
 }
 

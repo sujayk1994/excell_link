@@ -86,6 +86,63 @@ export async function registerRoutes(
       const descIndex = headers.indexOf("Description");
       const domainIndex = headers.indexOf("Unique Domain");
 
+      // Email finding logic
+      app.post("/api/files/:id/find-emails", async (req, res) => {
+        try {
+          const id = parseInt(req.params.id as string);
+          const fileRecord = await storage.getProcessedFile(id);
+          if (!fileRecord) return res.status(404).json({ message: "File not found" });
+
+          const filePath = path.join("uploads", fileRecord.processedName);
+          const workbook = XLSX.readFile(filePath);
+          const sheet = workbook.Sheets[workbook.SheetNames[0]];
+          const data: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+          const headers = data[0] as string[];
+          if (!headers.includes("Management Emails")) {
+            headers.push("Management Emails");
+          }
+          const emailIndex = headers.indexOf("Management Emails");
+          const domainIndex = headers.indexOf("Unique Domain");
+
+          let totalEmailsFound = 0;
+          const rowsToProcess = data.slice(1);
+          
+          await batchProcess(
+            rowsToProcess,
+            async (row) => {
+              const domain = row[domainIndex];
+              if (domain) {
+                const prompt = `Find potential business emails for top-level management (CEO, VP, Marketing Head, etc.) for the company with domain "${domain}". Search the web and provide a comma-separated list of found emails. If none are found, respond with "None found". Only provide the emails.`;
+                const response = await openai.chat.completions.create({
+                  model: "gpt-5.1",
+                  messages: [{ role: "user", content: prompt }],
+                  max_completion_tokens: 200,
+                });
+                const emails = response.choices[0]?.message?.content?.trim() || "";
+                if (emails && emails.toLowerCase() !== "none found") {
+                  row[emailIndex] = emails;
+                  totalEmailsFound += emails.split(",").length;
+                }
+              }
+              return row;
+            },
+            { concurrency: 5, retries: 3 }
+          );
+
+          const newSheet = XLSX.utils.aoa_to_sheet(data);
+          newSheet['!cols'] = (sheet['!cols'] || []).concat([{ wch: 60 }]);
+          workbook.Sheets[workbook.SheetNames[0]] = newSheet;
+          XLSX.writeFile(workbook, filePath);
+
+          await storage.updateEmailCount(id, totalEmailsFound);
+          res.status(200).json({ message: "Email finding complete", emailCount: totalEmailsFound });
+        } catch (error) {
+          console.error("Find emails error:", error);
+          res.status(500).json({ message: "Failed to find emails" });
+        }
+      });
+
       // Scrape for unique domains using batch processing for efficiency
       const rowsToProcess = data.slice(1);
       await batchProcess(

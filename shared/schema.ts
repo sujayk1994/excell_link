@@ -8,6 +8,7 @@ export const processedFiles = pgTable("processed_files", {
   processedName: text("processed_name").notNull(),
   mimeType: text("mime_type").notNull(),
   size: integer("size").notNull(),
+  emailCount: integer("email_count").default(0),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
