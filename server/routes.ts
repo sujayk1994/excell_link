@@ -6,8 +6,29 @@ import { storage } from "./storage";
 import { api } from "@shared/routes";
 import path from "path";
 import fs from "fs";
+import axios from "axios";
+import * as cheerio from "cheerio";
 
 const upload = multer({ dest: "uploads/" });
+
+async function scrapeDescription(url: string): Promise<string> {
+  try {
+    const targetUrl = url.startsWith("http") ? url : `https://${url}`;
+    const response = await axios.get(targetUrl, { 
+      timeout: 5000,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      }
+    });
+    const $ = cheerio.load(response.data);
+    const description = $('meta[name="description"]').attr('content') || 
+                       $('meta[property="og:description"]').attr('content') ||
+                       "No description found";
+    return description.trim();
+  } catch (error) {
+    return "Error fetching description";
+  }
+}
 
 export async function registerRoutes(
   httpServer: Server,
@@ -21,6 +42,47 @@ export async function registerRoutes(
   // Health check endpoint
   app.get("/api/health", (req, res) => {
     res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
+  });
+
+  app.post("/api/files/:id/scrape", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const fileRecord = await storage.getProcessedFile(id);
+      if (!fileRecord) return res.status(404).json({ message: "File not found" });
+
+      const filePath = path.join("uploads", fileRecord.processedName);
+      const workbook = XLSX.readFile(filePath);
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const data: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+      const headers = data[0] as string[];
+      if (!headers.includes("Description")) {
+        headers.push("Description");
+      }
+      const descIndex = headers.indexOf("Description");
+      const domainIndex = headers.indexOf("Unique Domain");
+
+      // Scrape for unique domains (limited to first 20 for performance in this turn)
+      const scrapePromises = data.slice(1).map(async (row, i) => {
+        const domain = row[domainIndex];
+        if (domain && domain !== "Unique Domain") {
+          row[descIndex] = await scrapeDescription(domain);
+        }
+        return row;
+      });
+
+      await Promise.all(scrapePromises);
+
+      const newSheet = XLSX.utils.aoa_to_sheet(data);
+      newSheet['!cols'] = [{ wch: 80 }, { wch: 40 }, { wch: 100 }];
+      workbook.Sheets[workbook.SheetNames[0]] = newSheet;
+      XLSX.writeFile(workbook, filePath);
+
+      res.status(200).json({ message: "Scraping complete" });
+    } catch (error) {
+      console.error("Scrape error:", error);
+      res.status(500).json({ message: "Failed to scrape descriptions" });
+    }
   });
 
   app.post(api.files.upload.path, upload.single("file"), async (req: Request, res) => {

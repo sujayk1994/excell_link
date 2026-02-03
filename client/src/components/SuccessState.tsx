@@ -1,7 +1,10 @@
-import { Download, FileCheck, ArrowRight, Calendar, HardDrive, Link2 } from "lucide-react";
+import { Download, FileCheck, ArrowRight, Calendar, HardDrive, Link2, Search, Loader2 } from "lucide-react";
 import { type ProcessedFile, buildUrl, api } from "@shared/routes";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 interface SuccessStateProps {
   file: ProcessedFile;
@@ -9,7 +12,28 @@ interface SuccessStateProps {
 }
 
 export function SuccessState({ file, onReset }: SuccessStateProps) {
+  const [isScraping, setIsScraping] = useState(false);
+  const { toast } = useToast();
   const downloadUrl = buildUrl(api.files.download.path, { id: file.id });
+
+  const handleScrape = async () => {
+    setIsScraping(true);
+    try {
+      await apiRequest("POST", `/api/files/${file.id}/scrape`);
+      toast({
+        title: "Success",
+        description: "Descriptions have been added to Column C. You can now download the updated file.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to scrape descriptions. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsScraping(false);
+    }
+  };
 
   return (
     <motion.div 
@@ -68,13 +92,28 @@ export function SuccessState({ file, onReset }: SuccessStateProps) {
             </div>
           </div>
 
-          <a
-            href={downloadUrl}
-            className="group w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-semibold text-white bg-slate-900 hover:bg-slate-800 shadow-lg shadow-slate-900/20 transition-all hover:-translate-y-0.5 active:translate-y-0"
-          >
-            <Download className="w-5 h-5" />
-            Download Processed Excel
-          </a>
+          <div className="grid grid-cols-1 gap-3">
+            <button
+              onClick={handleScrape}
+              disabled={isScraping}
+              className="group w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-600/20 transition-all hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isScraping ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <Search className="w-5 h-5" />
+              )}
+              {isScraping ? "Scraping Descriptions..." : "Scrape Website Descriptions"}
+            </button>
+
+            <a
+              href={downloadUrl}
+              className="group w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-semibold text-white bg-slate-900 hover:bg-slate-800 shadow-lg shadow-slate-900/20 transition-all hover:-translate-y-0.5 active:translate-y-0"
+            >
+              <Download className="w-5 h-5" />
+              Download Processed Excel
+            </a>
+          </div>
 
           <button
             onClick={onReset}
