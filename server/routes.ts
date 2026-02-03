@@ -181,7 +181,7 @@ export async function registerRoutes(
       // Column A: All links (including duplicates)
       // Column B: Only unique formatted domains (compacted, no empty rows)
       const columnA = links;
-      const columnB = deduplicate ? [...new Set(links.map(formatDomain))] : links.map(formatDomain);
+      const columnB = deduplicate ? Array.from(new Set(links.map(formatDomain))) : links.map(formatDomain);
       
       // Combine into rows by taking the longest list as the row count
       const rowCount = Math.max(columnA.length, columnB.length);
@@ -222,7 +222,7 @@ export async function registerRoutes(
 
   app.get(api.files.download.path, async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(req.params.id as string);
       if (isNaN(id)) return res.status(400).json({ message: "Invalid ID" });
 
       const fileRecord = await storage.getProcessedFile(id);
