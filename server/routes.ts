@@ -112,17 +112,22 @@ export async function registerRoutes(
             rowsToProcess,
             async (row) => {
               const domain = row[domainIndex];
-              if (domain) {
+              if (domain && domain !== "Unique Domain") {
                 const prompt = `Find potential business emails for top-level management (CEO, VP, Marketing Head, etc.) for the company with domain "${domain}". Search the web and provide a comma-separated list of found emails. If none are found, respond with "None found". Only provide the emails.`;
-                const response = await openai.chat.completions.create({
-                  model: "gpt-5.1",
-                  messages: [{ role: "user", content: prompt }],
-                  max_completion_tokens: 200,
-                });
-                const emails = response.choices[0]?.message?.content?.trim() || "";
-                if (emails && emails.toLowerCase() !== "none found") {
-                  row[emailIndex] = emails;
-                  totalEmailsFound += emails.split(",").length;
+                try {
+                  const response = await openai.chat.completions.create({
+                    model: "gpt-5.1",
+                    messages: [{ role: "user", content: prompt }],
+                    max_completion_tokens: 200,
+                  });
+                  const emails = response.choices[0]?.message?.content?.trim() || "";
+                  if (emails && emails.toLowerCase() !== "none found") {
+                    row[emailIndex] = emails;
+                    totalEmailsFound += emails.split(",").length;
+                  }
+                } catch (err) {
+                  console.error(`AI Error finding emails for ${domain}:`, err);
+                  row[emailIndex] = "Error finding emails";
                 }
               }
               return row;
